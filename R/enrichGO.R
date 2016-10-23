@@ -14,6 +14,7 @@
 ##' @param minGSSize minimal size of genes annotated by Ontology term for testing.
 ##' @param maxGSSize maximal size of genes annotated for testing
 ##' @param readable whether mapping gene ID to gene Name
+##' @param GOFromGOSeq
 ##' @return An \code{enrichResult} instance.
 ##' @importClassesFrom DOSE enrichResult
 ##' @importMethodsFrom DOSE show
@@ -41,13 +42,22 @@ enrichGO <- function(gene,
                      qvalueCutoff = 0.2,
                      minGSSize = 10,
                      maxGSSize = 500,
-                     readable=FALSE) {
+                     readable=FALSE,GOFromGOSeq,whichway="HT") {
 
+  
+    cat("this is local version\n")
+    print(dim(GOFromGOSeq))
+  
     ont %<>% toupper
     ont <- match.arg(ont, c("BP", "CC", "MF", "ALL"))
 
+    whichway %<>% toupper
+    whichway <- match.arg(whichway, c("HT","WHT"))
+    
     GO_DATA <- get_GO_data(OrgDb, ont, keytype)
 
+    print(GO_DATA)
+    
     res <- enricher_internal(gene,
                              pvalueCutoff=pvalueCutoff,
                              pAdjustMethod=pAdjustMethod,
@@ -55,22 +65,21 @@ enrichGO <- function(gene,
                              qvalueCutoff = qvalueCutoff,
                              minGSSize = minGSSize,
                              maxGSSize = maxGSSize,
-                             USER_DATA = GO_DATA
-                             )
+                             USER_DATA = GO_DATA,otherGO=GOFromGOSeq,whichway=whichway)
 
-    if (is.null(res))
-        return(res)
-
-    res@keytype <- keytype
-    res@organism <- get_organism(OrgDb)
-    if(readable) {
-        res <- setReadable(res, OrgDb)
-    }
-    res@ontology <- ont
-
-    if (ont == "ALL") {
-        res <- add_GO_Ontology(res, GO_DATA)
-    }
+     if (is.null(res))
+         return(res)
+     
+     res@keytype <- keytype
+     res@organism <- get_organism(OrgDb)
+     if(readable) {
+         res <- setReadable(res, OrgDb)
+     }
+     res@ontology <- ont
+     
+     if (ont == "ALL") {
+         res <- add_GO_Ontology(res, GO_DATA)
+     }
     return(res)
 }
 
